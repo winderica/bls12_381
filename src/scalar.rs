@@ -713,7 +713,29 @@ impl PrimeField for Scalar {
     }
 
     fn is_odd(&self) -> Choice {
-        Choice::from(self.to_bytes()[0] & 1)
+        let k = self.0[0].wrapping_mul(INV);
+        let (_, carry) = mac(self.0[0], k, MODULUS.0[0], 0);
+        let (r1, carry) = mac(self.0[1], k, MODULUS.0[1], carry);
+        let (r2, carry) = mac(self.0[2], k, MODULUS.0[2], carry);
+        let (r3, carry) = mac(self.0[3], k, MODULUS.0[3], carry);
+        let r4 = carry % 2;
+
+        let k = r1.wrapping_mul(INV);
+        let (_, carry) = mac(r1, k, MODULUS.0[0], 0);
+        let (r2, carry) = mac(r2, k, MODULUS.0[1], carry);
+        let (r3, carry) = mac(r3, k, MODULUS.0[2], carry);
+        let r4 = r4 ^ (carry % 2);
+
+        let k = r2.wrapping_mul(INV);
+        let (_, carry) = mac(r2, k, MODULUS.0[0], 0);
+        let (r3, carry) = mac(r3, k, MODULUS.0[1], carry);
+        let r4 = r4 ^ (k % 2) ^ (carry % 2);
+
+        let k = r3.wrapping_mul(INV);
+        let (_, carry) = mac(r3, k, MODULUS.0[0], 0);
+        let r4 = r4 ^ (carry % 2);
+
+        Choice::from(r4 as u8)
     }
 
     const NUM_BITS: u32 = MODULUS_BITS;
