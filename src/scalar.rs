@@ -258,6 +258,10 @@ impl Scalar {
         CtOption::new(tmp, Choice::from(is_some))
     }
 
+    pub fn to_u64_digits(&self) -> [u64; 4] {
+        Scalar::montgomery_reduce(self.0[0], self.0[1], self.0[2], self.0[3], 0, 0, 0, 0).0
+    }
+
     /// Converts an element of `Scalar` into a byte representation in
     /// little-endian byte order.
     pub fn to_bytes(&self) -> [u8; 32] {
